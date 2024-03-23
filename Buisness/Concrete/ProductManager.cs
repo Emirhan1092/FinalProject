@@ -1,14 +1,19 @@
 ﻿using Buisness.Abstract;
 using Buisness.Constants;
+using Buisness.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Validation;
+using Core.CrossCuttingConcerns.Validation;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using DataAccess.Concrete.Entityframework;
 using DataAccess.Concrete.InMemory;
 using Entities.Concrete;
 using Entities.DTOs;
+using FluentValidation;
 using NPoco.FluentMappings;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -29,13 +34,12 @@ namespace Buisness.Concrete
             _productDal = productDal;
         }
 
+        [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
         {
-            if(product.ProductName.Length<2)
-            {
-                return new ErrorResult(Masseges.ProductNameInvalid);
+             
+         
 
-            }
             _productDal.Add(product);
 
             return new SuccessResult(Masseges.ProductAdded);
@@ -44,11 +48,11 @@ namespace Buisness.Concrete
         public IDataResult<List<Product>> GetAll()
         {
 
-            if (DateTime.Now.Hour==22)
+            if (DateTime.Now.Hour == 20)
             {
                 return new ErrorDataResult<List<Product>>(Masseges.MaintenanceTime);
             }
-            return new SuccesDataResult<List<Product>>(Masseges.ProductListed);
+            return new SuccesDataResult<List<Product>>(_productDal.GetAll(),Masseges.ProductListed); ;
 
   
         }
