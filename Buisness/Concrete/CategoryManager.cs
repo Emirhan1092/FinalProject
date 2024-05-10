@@ -1,38 +1,27 @@
-﻿using Buisness.Abstract;
-using DataAccess.Abstract;
+﻿using DataAccess.Abstract;
 using Entities.Concrete;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Core.Utilities.Results;
+using Buisness.Abstract;
 
-namespace Buisness.Concrete
+namespace Business.Concrete
 {
     public class CategoryManager : ICategoryService
     {
-        ICategoryDal _categorDal;
+        ICategoryDal _categoryDal;
 
-        public CategoryManager()
+        public CategoryManager(ICategoryDal categoryDal)
         {
+            _categoryDal = categoryDal;
         }
 
-        public CategoryManager(ICategoryDal categorDal)
+        public IDataResult<List<Category>> GetAll()
         {
-            _categorDal = categorDal;
+            return new SuccesDataResult<List<Category>>(_categoryDal.GetAll());
         }
 
-        public List<Category> GetAll()
+        public IDataResult<Category> GetById(int categoryId)
         {
-            return _categorDal.GetAll();
-
+            return new SuccesDataResult<Category>(_categoryDal.Get(c => c.CategoryId == categoryId));
         }
-
-        public Category GetById(int categoryId)
-        {
-            return _categorDal.Get(c => c.CategoryId == categoryId);
-        }
-
-        
     }
 }

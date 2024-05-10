@@ -1,84 +1,115 @@
 ﻿using Buisness.Abstract;
 using Buisness.Constants;
 using Buisness.ValidationRules.FluentValidation;
+using Business.BusinessAspects.Autofac;
+using Core.Aspects.Autofac.Caching;
+using Core.Aspects.Autofac.Transaction;
 using Core.Aspects.Autofac.Validation;
-using Core.CrossCuttingConcerns.Validation;
+using Core.Utilities.Buisness;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
-using DataAccess.Concrete.Entityframework;
-using DataAccess.Concrete.InMemory;
 using Entities.Concrete;
 using Entities.DTOs;
-using FluentValidation;
-using NPoco.FluentMappings;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Ajax.Utilities;
 
-namespace Buisness.Concrete
+namespace Business.Concrete
 {
     public class ProductManager : IProductService
     {
         IProductDal _productDal;
 
-        public ProductManager()
-        {
-        }
-
         public ProductManager(IProductDal productDal)
         {
-            _productDal = productDal;
+            this._productDal = productDal;
         }
 
-        [ValidationAspect(typeof(ProductValidator))]
-        public IResult Add(Product product)
-        {
-             
-         
-
-            _productDal.Add(product);
-
-            return new SuccessResult(Masseges.ProductAdded);
-        }
-
+        [CacheAspect]
         public IDataResult<List<Product>> GetAll()
         {
-
-            if (DateTime.Now.Hour == 20)
+            if (DateTime.Now.Hour == 13)
             {
                 return new ErrorDataResult<List<Product>>(Masseges.MaintenanceTime);
             }
-            return new SuccesDataResult<List<Product>>(_productDal.GetAll(),Masseges.ProductListed); ;
+            return new SuccesDataResult<List<Product>>(_productDal.GetAll(), Masseges.ProductsListed);
+        }
 
-  
+        //[SecuredOperation("product.add,admin")]
+        [ValidationAspect(typeof(ProductValidator))]
+        public IResult Add(Product product)
+        {
+            IResult result = BusinessRules.Run(CheckIfSameName(product.ProductName)
+                , CheckIfProductCountOfCategoryCorrect(product.CategoryId));
+            if (result != null)
+            {
+                return result;
+            }
+            _productDal.Add(product);
+            return new Result(true, Masseges.ProductAdded);
         }
 
         public IDataResult<List<Product>> GetAllByCategoryId(int id)
         {
-            return new SuccesDataResult<List<Product>>(_productDal.GetAll(p=>p.CategoryId==id));
+            return new SuccesDataResult<List<Product>>(_productDal.GetAll(p => p.CategoryId == id));
         }
 
-        public IDataResult<Product> GetById(int productid)
+        public IDataResult<List<Product>> GetByUnitPrice(decimal unitMin, decimal unitMax)
         {
-            return new SuccesDataResult<Product>(_productDal.Get(p=>p.ProductId==productid));
-        }
-
-        public IDataResult<List<Product>> GetByUnitPrice(decimal min, decimal max)
-        {
-            return new SuccesDataResult<List<Product>>(_productDal.GetAll(p => p.UnitPrice >= min && p.UnitPrice <= max));
+            return new SuccesDataResult<List<Product>>(_productDal.GetAll(p => p.UnitPrice <= unitMax && p.UnitPrice >= unitMin));
         }
 
         public IDataResult<List<ProductDetailsDto>> GetProductDetails()
         {
-           
             return new SuccesDataResult<List<ProductDetailsDto>>(_productDal.GetProductDetails());
-
         }
 
 
+        [CacheAspect]
+        [PerformanceAspect(5)]
+        public IDataResult<Product> GetById(int productId)
+        {
+            return new SuccesDataResult<Product>(_productDal.Get(p => p.ProductId == productId));
+        }
+        [ValidationAspect(typeof(ProductValidator))]
+        [CacheRemoveAspect("IProductService.Get")]
+        public IResult Update(Product product)
+        {
+            _productDal.Update(product);
+            return new SuccessResult();
+        }
+        public IResult AddTransactionalTest(Product product)
+        {
+            throw new NotImplementedException();
+        }
+        private IResult CheckIfProductCountOfCategoryCorrect(int categoryId)
+        {
+            var result = _productDal.GetAll(p => p.ProductId == categoryId);
+            if (result.Count >= 10)
+            {
+                return new ErrorResult("Bir kategoride 10 adetten fazla ürün bulunamaz.");
+            }
+            return new SuccessResult();
+        }
+        private IResult CheckIfSameName(string name)
+        {
+            var result = _productDal.Get(p => p.ProductName == name);
+            if (result != null)
+            {
+                return new SuccessResult();
+            }
+            return new ErrorResult();
+        }
+        [TransactionScopeAspect]
+        public IResult AddTansactionalTest(Product product)
+        {
+            Add(product);
+            if (product.UnitPrice < 10) ;
+            {
+                throw new Exception("");
+
+            }
+
+            Add(product);
+            return null;
+        }
     }
 }

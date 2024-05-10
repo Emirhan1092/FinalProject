@@ -1,4 +1,5 @@
-﻿using Core.Entities;
+﻿
+using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,8 +11,8 @@ using System.Threading.Tasks;
 namespace Core.DataAccess.EntitiyFramework
 {
     public class EfEntityRepositoryBase<TEntitiy, TContext> : IEntityRepository<TEntitiy>
-        where TEntitiy : class , IEntity , new() 
-        where TContext : DbContext , IEntity , new()
+        where TEntitiy : class, IEntity, new()
+        where TContext : DbContext, IEntity, new()
     {
         public void Add(TEntitiy entity)
         {
@@ -33,15 +34,16 @@ namespace Core.DataAccess.EntitiyFramework
             }
         }
 
+
         public TEntitiy Get(Expression<Func<TEntitiy, bool>> filter)
         {
             using (TContext context = new TContext())
             {
-
-                return context.Set<TEntitiy>().SingleOrDefault(filter);
+                return context.Set<TEntitiy>().FirstOrDefault(filter);
             }
         }
-        List<TEntitiy> IEntityRepository<TEntitiy>.GetAll(Expression<Func<TEntitiy, bool>> filter)
+    
+    List<TEntitiy> IEntityRepository<TEntitiy>.GetAll(Expression<Func<TEntitiy, bool>> filter)
         {
 
 
@@ -70,5 +72,5 @@ namespace Core.DataAccess.EntitiyFramework
     }
 }
 
-    
+
 

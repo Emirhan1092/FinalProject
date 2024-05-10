@@ -1,16 +1,20 @@
-﻿using Autofac;
+﻿
+using Autofac;
 using Autofac.Extras.DynamicProxy;
 using Buisness.Abstract;
-using Buisness.Concrete;
+using Buisness.CCS;
+using Buisness.Concrete.Business.Concrete;
+using Business.Concrete;
 using Castle.DynamicProxy;
 using Core.Utilities.Interceptors;
+using Core.Utilities.Security.Jwt;
+using Core.Utilities.Security.JWT;
 using DataAccess.Abstract;
+using DataAccess.Abstract.DataAccess.Abstract;
 using DataAccess.Concrete.Entityframework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using DataAccess.Concrete.EntityFramework;
+using Microsoft.AspNetCore.Http;
+
 
 namespace Buisness.DependencyResolves.Autofac
 {
@@ -23,6 +27,14 @@ namespace Buisness.DependencyResolves.Autofac
 
             builder.RegisterType<ProductManager>().As<IProductService>().SingleInstance();
             builder.RegisterType<EfProductDal>().As<IProductDal>().SingleInstance();
+            builder.RegisterType<FileLogger>().As<ILogger>().SingleInstance(); 
+            builder.RegisterType<CategoryManager>().As<ICategoryService>().SingleInstance();
+            builder.RegisterType<EfCategoryDal>().As<ICategoryDal>().SingleInstance();
+            builder.RegisterType<UserManager>().As<IUserService>();
+            builder.RegisterType<EfUserDal>().As<IUserDal>();
+            builder.RegisterType<AuthManager>().As<IAuthService>();
+            builder.RegisterType<JwtHelper>().As<ITokenHelper>();
+
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
 
             builder.RegisterAssemblyTypes(assembly).AsImplementedInterfaces()

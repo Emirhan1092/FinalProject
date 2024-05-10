@@ -23,6 +23,7 @@ namespace Core.Utilities.Results
         
 
         }
+
         public SuccesDataResult():base(default,true) 
         { 
 
